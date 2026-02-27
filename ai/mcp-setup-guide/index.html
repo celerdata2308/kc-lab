@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CelerData Internal MCPs Setup Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+
+:root {
+  --bg:       #0A0F1E;
+  --bg2:      #0D1525;
+  --bg3:      #12182E;
+  --bg4:      #16203A;
+  --gold:     #D4A843;
+  --gold2:    #E8C070;
+  --gold-dim: #8B6E2A;
+  --gold-glow:rgba(212,168,67,0.18);
+  --gold-glow2:rgba(212,168,67,0.06);
+  --text:     #F0E6D3;
+  --text2:    #C8B89A;
+  --muted:    #8899AA;
+  --border:   #1E2E48;
+  --border2:  rgba(212,168,67,0.25);
+  --red:      #EF4444;
+  --orange:   #F97316;
+  --green:    #22C55E;
+  --blue:     #3B82F6;
+  --purple:   #A855F7;
+  --mono:     'JetBrains Mono', monospace;
+  --sans:     'Inter', sans-serif;
+  --nav-h:    64px;
+  --max-w:    1100px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+.gold { color: var(--gold); }
+.muted { color: var(--muted); }
+.mono { font-family: var(--mono); }
+.green { color: var(--green); }
+.blue { color: var(--blue); }
+.orange { color: var(--orange); }
+.purple { color: var(--purple); }
+
+/* ─── REVEAL ANIMATIONS ─── */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.reveal.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+.delay-1 { transition-delay: 0.1s; }
+.delay-2 { transition-delay: 0.2s; }
+.delay-3 { transition-delay: 0.3s; }
+.delay-4 { transition-delay: 0.4s; }
+.delay-5 { transition-delay: 0.5s; }
+
+/* ─── NAV ─── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--nav-h);
+  background: rgba(10,15,30,0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  padding: 0 40px;
+  justify-content: space-between;
+}
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.nav-logo {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 14px; color: var(--bg);
+  font-family: var(--mono);
+}
+.nav-title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text2);
+}
+.nav-links {
+  display: flex;
+  gap: 28px;
+  list-style: none;
+}
+.nav-links a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--gold); }
+
+/* ─── HERO ─── */
+.hero {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: calc(var(--nav-h) + 60px) 40px 60px;
+}
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(212,168,67,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 20% 80%, rgba(59,130,246,0.05) 0%, transparent 60%),
+    linear-gradient(180deg, var(--bg) 0%, #080C18 100%);
+}
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(212,168,67,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(212,168,67,0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 20%, transparent 80%);
+}
+.hero-content {
+  position: relative;
+  max-width: 860px;
+  text-align: center;
+}
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(212,168,67,0.1);
+  border: 1px solid rgba(212,168,67,0.3);
+  border-radius: 100px;
+  padding: 6px 18px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 32px;
+}
+.hero h1 {
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  margin-bottom: 20px;
+}
+.hero p {
+  font-size: 18px;
+  color: var(--text2);
+  max-width: 640px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+/* ─── SECTIONS ─── */
+section {
+  padding: 80px 40px;
+  max-width: var(--max-w);
+  margin: 0 auto;
+}
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+.section-label::before {
+  content: '';
+  width: 20px;
+  height: 1px;
+  background: var(--gold-dim);
+}
+section h2 {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+}
+section h2 + p {
+  color: var(--muted);
+  font-size: 16px;
+  margin-bottom: 48px;
+}
+
+/* ─── OVERVIEW TABLE ─── */
+.overview-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 32px 0;
+  font-size: 14px;
+}
+.overview-table th {
+  text-align: left;
+  padding: 14px 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  border-bottom: 2px solid var(--border2);
+  background: var(--bg2);
+}
+.overview-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text2);
+}
+.overview-table tr:hover td {
+  background: var(--bg3);
+}
+.overview-table code {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--gold2);
+  background: rgba(212,168,67,0.08);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.badge-remote {
+  background: rgba(59,130,246,0.15);
+  color: var(--blue);
+  border: 1px solid rgba(59,130,246,0.3);
+}
+.badge-local {
+  background: rgba(34,197,94,0.15);
+  color: var(--green);
+  border: 1px solid rgba(34,197,94,0.3);
+}
+
+/* ─── MCP CARDS ─── */
+.mcp-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+  margin-top: 40px;
+}
+.mcp-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.mcp-card:hover {
+  border-color: var(--border2);
+  box-shadow: 0 0 40px var(--gold-glow2);
+}
+.mcp-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.mcp-card:hover::before {
+  opacity: 1;
+}
+.mcp-card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.mcp-icon {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.mcp-icon.feishu { background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); }
+.mcp-icon.gdocs { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); }
+.mcp-icon.starrocks { background: rgba(212,168,67,0.15); border: 1px solid rgba(212,168,67,0.3); }
+.mcp-icon.byoc { background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.3); }
+.mcp-icon.private { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); }
+
+.mcp-card h3 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.mcp-card h3 .badge { margin-left: 10px; vertical-align: middle; font-size: 10px; }
+.mcp-card-desc {
+  color: var(--text2);
+  font-size: 15px;
+  margin-bottom: 24px;
+  line-height: 1.7;
+}
+
+/* ─── CODE BLOCKS ─── */
+.code-block {
+  background: #080C18;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 16px 0;
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+}
+.code-dots {
+  display: flex; gap: 6px;
+}
+.code-dots span {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.code-dots span:nth-child(1) { background: #EF4444; }
+.code-dots span:nth-child(2) { background: #F59E0B; }
+.code-dots span:nth-child(3) { background: #22C55E; }
+.code-lang {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+.code-block pre {
+  padding: 20px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text2);
+}
+.code-block .key { color: var(--blue); }
+.code-block .str { color: var(--green); }
+.code-block .comment { color: #556677; }
+.code-block .cmd { color: var(--gold2); }
+.code-block .flag { color: var(--muted); }
+.code-block .ok { color: var(--green); }
+.code-block .err { color: var(--red); }
+
+/* ─── SETUP STEPS ─── */
+.steps {
+  margin-top: 24px;
+}
+.step {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+.step-num {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: rgba(212,168,67,0.12);
+  border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gold);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.step-content {
+  flex: 1;
+}
+.step-content h4 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.step-content p {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ─── FLOW DIAGRAM ─── */
+.flow-diagram {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 40px;
+  margin: 24px 0;
+  text-align: center;
+  overflow-x: auto;
+}
+.flow-diagram pre {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.5;
+  display: inline-block;
+  text-align: left;
+}
+
+/* ─── TROUBLESHOOTING TABLE ─── */
+.trouble-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 14px;
+}
+.trouble-table th {
+  text-align: left;
+  padding: 14px 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  border-bottom: 2px solid var(--border2);
+  background: var(--bg2);
+}
+.trouble-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text2);
+  vertical-align: top;
+}
+.trouble-table td:first-child {
+  color: var(--red);
+  font-family: var(--mono);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.trouble-table tr:hover td {
+  background: var(--bg3);
+}
+
+/* ─── FILE TREE ─── */
+.file-tree {
+  background: #080C18;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px 32px;
+  margin: 24px 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--muted);
+}
+.file-tree .dir { color: var(--blue); font-weight: 600; }
+.file-tree .file { color: var(--text2); }
+.file-tree .note { color: #556677; }
+
+/* ─── DAILY USAGE ─── */
+.usage-box {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 24px 0;
+}
+.usage-box h4 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--gold);
+}
+
+/* ─── DIVIDER ─── */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), var(--border2), var(--border), transparent);
+  margin: 0;
+  max-width: var(--max-w);
+  margin: 0 auto;
+}
+
+/* ─── FOOTER ─── */
+footer {
+  text-align: center;
+  padding: 60px 40px;
+  color: var(--muted);
+  font-size: 13px;
+}
+footer .gold { font-weight: 600; }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 768px) {
+  nav { padding: 0 20px; }
+  .nav-links { display: none; }
+  section { padding: 60px 20px; }
+  .mcp-card { padding: 28px; }
+  .hero { padding: calc(var(--nav-h) + 40px) 20px 40px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <div class="nav-logo">CD</div>
+    <span class="nav-title">CelerData · Internal MCPs</span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#remote">Remote MCPs</a></li>
+    <li><a href="#local">Local MCPs</a></li>
+    <li><a href="#private">Private Cluster</a></li>
+    <li><a href="#files">Files</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow reveal">⚡ Internal Documentation</div>
+    <h1 class="reveal delay-1">CelerData<br><span class="gold">Internal MCPs Setup Guide</span></h1>
+    <p class="reveal delay-2">Your starting point for connecting AI to every system we use — Feishu, Google Docs, StarRocks, BYOC Admin, and private clusters — all through Model Context Protocol.</p>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- OVERVIEW -->
+<section id="overview">
+  <div class="section-label reveal">01 — Overview</div>
+  <h2 class="reveal delay-1">Why This Guide Exists</h2>
+  <div class="reveal delay-2" style="color:var(--text2);font-size:16px;max-width:760px;margin-bottom:20px;line-height:1.8;">
+    This is a recommended setup guide to help you connect Claude to CelerData's internal systems through MCP (Model Context Protocol) servers. Think of it as a starting point — the five servers below cover our most common workflows today, but the MCP library will keep growing as we connect more tools and build toward a fully AI-driven engineering experience.
+  </div>
+  <div class="reveal delay-2" style="color:var(--muted);font-size:14px;max-width:760px;margin-bottom:48px;line-height:1.7;border-left:2px solid var(--gold-dim);padding-left:16px;">
+    Pick what you need and skip what you don't. Remote MCPs run on Railway with zero local setup; local MCPs run on your machine and need a bit more configuration.
+  </div>
+
+  <table class="overview-table reveal delay-3">
+    <thead>
+      <tr>
+        <th>MCP Server</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Prerequisites</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>feishu-mcp</code></td>
+        <td><span class="badge badge-remote">Remote</span></td>
+        <td>Feishu/Lark docs, wiki, chat, messaging</td>
+        <td class="muted">None</td>
+      </tr>
+      <tr>
+        <td><code>google-docs</code></td>
+        <td><span class="badge badge-remote">Remote</span></td>
+        <td>Google Docs, Sheets, Drive</td>
+        <td class="muted">None</td>
+      </tr>
+      <tr>
+        <td><code>starrocks</code></td>
+        <td><span class="badge badge-remote">Remote</span></td>
+        <td>Shared StarRocks clusters</td>
+        <td>Bearer token</td>
+      </tr>
+      <tr>
+        <td><code>byoc-admin</code></td>
+        <td><span class="badge badge-local">Local</span></td>
+        <td>BYOC cluster management & diagnostics</td>
+        <td>Session cookie</td>
+      </tr>
+      <tr>
+        <td><code>starrocks-private</code></td>
+        <td><span class="badge badge-local">Local</span></td>
+        <td>Private metrics-pipeline cluster</td>
+        <td>VPN + SSH tunnel</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<div class="divider"></div>
+
+<!-- CONFIGURATION -->
+<section>
+  <div class="section-label reveal">02 — Configuration</div>
+  <h2 class="reveal delay-1">Config File</h2>
+  <p class="reveal delay-2">All MCP servers are defined in a single config file, aliased to the Claude Desktop config directory.</p>
+
+  <div class="code-block reveal delay-3">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span class="code-lang">path</span>
+    </div>
+    <pre><span class="comment"># Source (edit here)</span>
+~/Documents/development/celerdata/<span class="str">claude_desktop_config.json</span>
+
+<span class="comment"># Alias target (Claude Desktop reads from here)</span>
+~/Library/Application Support/Claude/<span class="str">claude_desktop_config.json</span></pre>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- REMOTE MCPs -->
+<section id="remote">
+  <div class="section-label reveal">03 — Remote MCPs</div>
+  <h2 class="reveal delay-1">Cloud-Hosted Servers</h2>
+  <p class="reveal delay-2">These run on Railway. No local setup required — just add the config and restart Claude Desktop.</p>
+
+  <div class="mcp-grid">
+    <!-- Feishu -->
+    <div class="mcp-card reveal delay-3">
+      <div class="mcp-card-header">
+        <div class="mcp-icon feishu">📑</div>
+        <h3>feishu-mcp <span class="badge badge-remote">Remote</span></h3>
+      </div>
+      <p class="mcp-card-desc">Connects Claude to Feishu/Lark for searching and reading documents, wiki pages, chat messages, and sending messages.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <span class="code-lang">claude_desktop_config.json</span>
+        </div>
+        <pre><span class="key">"feishu-mcp"</span>: {
+  <span class="key">"command"</span>: <span class="str">"npx"</span>,
+  <span class="key">"args"</span>: [
+    <span class="str">"mcp-remote"</span>,
+    <span class="str">"https://feishu-mcp-production.up.railway.app/sse"</span>
+  ]
+}</pre>
+      </div>
+      <p class="muted" style="font-size:13px;margin-top:12px;">Tools: Search docs · Read wiki · List/read chats · Send messages · Export documents</p>
+    </div>
+
+    <!-- Google Docs -->
+    <div class="mcp-card reveal delay-4">
+      <div class="mcp-card-header">
+        <div class="mcp-icon gdocs">📝</div>
+        <h3>google-docs <span class="badge badge-remote">Remote</span></h3>
+      </div>
+      <p class="mcp-card-desc">Connects Claude to Google Docs, Sheets, and Drive for reading, creating, and editing documents and spreadsheets. OAuth handled by the remote server.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <span class="code-lang">claude_desktop_config.json</span>
+        </div>
+        <pre><span class="key">"google-docs"</span>: {
+  <span class="key">"command"</span>: <span class="str">"npx"</span>,
+  <span class="key">"args"</span>: [
+    <span class="str">"mcp-remote"</span>,
+    <span class="str">"https://google-docs-mcp-production-b4cc.up.railway.app/sse"</span>
+  ]
+}</pre>
+      </div>
+      <p class="muted" style="font-size:13px;margin-top:12px;">Tools: Read/write/create Docs · Read/write Sheets · Drive files · Comments · Formatting</p>
+    </div>
+
+    <!-- StarRocks (shared) -->
+    <div class="mcp-card reveal delay-5">
+      <div class="mcp-card-header">
+        <div class="mcp-icon starrocks">⚡</div>
+        <h3>starrocks <span class="badge badge-remote">Remote</span></h3>
+      </div>
+      <p class="mcp-card-desc">Connects Claude to shared StarRocks clusters for SQL queries, database exploration, and data visualization. Managed by the team — contact admin for a Bearer token.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <span class="code-lang">claude_desktop_config.json</span>
+        </div>
+        <pre><span class="key">"starrocks"</span>: {
+  <span class="key">"command"</span>: <span class="str">"npx"</span>,
+  <span class="key">"args"</span>: [
+    <span class="str">"mcp-remote"</span>,
+    <span class="str">"https://romantic-rebirth-production.up.railway.app/mcp"</span>,
+    <span class="str">"--header"</span>,
+    <span class="str">"Authorization:Bearer &lt;your-token&gt;"</span>
+  ]
+}</pre>
+      </div>
+      <p class="muted" style="font-size:13px;margin-top:12px;">Tools: <code>list_clusters</code> · <code>use_cluster</code> · <code>read_query</code> · <code>write_query</code> · <code>db_summary</code> · <code>query_and_plotly_chart</code></p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- LOCAL MCPs -->
+<section id="local">
+  <div class="section-label reveal">04 — Local MCPs</div>
+  <h2 class="reveal delay-1">Self-Hosted Servers</h2>
+  <p class="reveal delay-2">These run locally on your machine and require some setup.</p>
+
+  <div class="mcp-grid">
+    <!-- BYOC Admin -->
+    <div class="mcp-card reveal delay-3">
+      <div class="mcp-card-header">
+        <div class="mcp-icon byoc">🛠</div>
+        <h3>byoc-admin <span class="badge badge-local">Local</span></h3>
+      </div>
+      <p class="mcp-card-desc">Connects Claude to the CelerData BYOC Admin API for cluster management, diagnostics, metrics, log search, and node-level commands.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Build the project</h4>
+            <div class="code-block">
+              <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div>
+              <pre><span class="cmd">cd</span> ~/Documents/development/celerdata/byoc-admin-mcp
+<span class="cmd">npm install</span>
+<span class="cmd">npm run build</span></pre>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Get your session cookie</h4>
+            <p>Go to <a href="https://byoc-admin.celerdata.com" style="color:var(--gold)">byoc-admin.celerdata.com</a> → DevTools → Cookies → copy <code style="color:var(--gold2);background:rgba(212,168,67,0.08);padding:2px 6px;border-radius:4px;font-family:var(--mono);font-size:13px;">SRSAASSESSION</code></p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Add to config</h4>
+            <div class="code-block">
+              <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">claude_desktop_config.json</span></div>
+              <pre><span class="key">"byoc-admin"</span>: {
+  <span class="key">"command"</span>: <span class="str">"node"</span>,
+  <span class="key">"args"</span>: [
+    <span class="str">"/Users/&lt;you&gt;/Documents/development/celerdata/byoc-admin-mcp/dist/index.js"</span>
+  ],
+  <span class="key">"env"</span>: {
+    <span class="key">"BYOC_COOKIE"</span>: <span class="str">"&lt;your-SRSAASSESSION-cookie&gt;"</span>
+  }
+}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="muted" style="font-size:13px;margin-top:8px;">⚠️ Session cookie expires periodically. Refresh from browser if tools fail with auth errors.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PRIVATE CLUSTER -->
+<section id="private">
+  <div class="section-label reveal">05 — Private Cluster</div>
+  <h2 class="reveal delay-1"><span class="gold">starrocks-private</span></h2>
+  <p class="reveal delay-2">Connect Claude directly to the private-metrics-pipeline StarRocks cluster via SSH tunnel through a VPN-connected jump server.</p>
+
+  <!-- Interactive Flow Diagram -->
+  <div class="reveal delay-3" style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:40px 24px;margin:24px 0;overflow-x:auto;">
+    <svg viewBox="0 0 900 340" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:900px;display:block;margin:0 auto;" font-family="Inter, sans-serif">
+      <defs>
+        <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <marker id="arrow" viewBox="0 0 10 6" refX="10" refY="3" markerWidth="10" markerHeight="6" orient="auto"><path d="M0,0 L10,3 L0,6" fill="#D4A843"/></marker>
+        <marker id="arrow-down" viewBox="0 0 6 10" refX="3" refY="10" markerWidth="6" markerHeight="10" orient="auto"><path d="M0,0 L3,10 L6,0" fill="#D4A843"/></marker>
+        <linearGradient id="grad-vpn" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#3B82F6" stop-opacity="0.6"/><stop offset="100%" stop-color="#3B82F6" stop-opacity="0.1"/></linearGradient>
+        <linearGradient id="grad-ssh" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#D4A843" stop-opacity="0.1"/><stop offset="100%" stop-color="#D4A843" stop-opacity="0.6"/></linearGradient>
+      </defs>
+
+      <!-- Animated data flow pulse -->
+      <style>
+        .pulse-dot { animation: pulseDot 3s ease-in-out infinite; }
+        .pulse-dot2 { animation: pulseDot2 3s ease-in-out infinite; }
+        .pulse-dot3 { animation: pulseDot3 2s ease-in-out infinite; }
+        @keyframes pulseDot { 0%,100% { opacity:0; } 10% { opacity:1; } 50% { opacity:1; } 60% { opacity:0; } }
+        @keyframes pulseDot2 { 0%,100% { opacity:0; } 30% { opacity:0; } 40% { opacity:1; } 70% { opacity:1; } 80% { opacity:0; } }
+        @keyframes pulseDot3 { 0%,100% { opacity:0.4; } 50% { opacity:1; } }
+        .node-box { transition: filter 0.3s, transform 0.15s; cursor: default; }
+        .node-box:hover { filter: url(#glow); }
+      </style>
+
+      <!-- Connection lines -->
+      <line x1="218" y1="90" x2="340" y2="90" stroke="url(#grad-vpn)" stroke-width="2" stroke-dasharray="6,4"/>
+      <line x1="530" y1="90" x2="652" y2="90" stroke="url(#grad-ssh)" stroke-width="2" stroke-dasharray="6,4"/>
+      <line x1="130" y1="150" x2="130" y2="240" stroke="#D4A843" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrow-down)"/>
+
+      <!-- Animated dots on VPN line -->
+      <circle class="pulse-dot" cx="260" cy="90" r="3" fill="#3B82F6"/>
+      <circle class="pulse-dot" cx="290" cy="90" r="3" fill="#3B82F6" style="animation-delay:0.3s"/>
+      <circle class="pulse-dot" cx="320" cy="90" r="3" fill="#3B82F6" style="animation-delay:0.6s"/>
+
+      <!-- Animated dots on SSH line -->
+      <circle class="pulse-dot2" cx="560" cy="90" r="3" fill="#D4A843"/>
+      <circle class="pulse-dot2" cx="590" cy="90" r="3" fill="#D4A843" style="animation-delay:0.3s"/>
+      <circle class="pulse-dot2" cx="620" cy="90" r="3" fill="#D4A843" style="animation-delay:0.6s"/>
+
+      <!-- Animated dot on localhost line -->
+      <circle class="pulse-dot3" cx="130" cy="200" r="3" fill="#D4A843"/>
+
+      <!-- Label: Proton VPN -->
+      <rect x="238" y="55" width="100" height="22" rx="11" fill="rgba(59,130,246,0.15)" stroke="rgba(59,130,246,0.3)" stroke-width="1"/>
+      <text x="288" y="70" text-anchor="middle" fill="#3B82F6" font-size="10" font-weight="600" letter-spacing="0.05em">PROTON VPN</text>
+
+      <!-- Label: SSH Tunnel -->
+      <rect x="540" y="55" width="100" height="22" rx="11" fill="rgba(212,168,67,0.15)" stroke="rgba(212,168,67,0.3)" stroke-width="1"/>
+      <text x="590" y="70" text-anchor="middle" fill="#D4A843" font-size="10" font-weight="600" letter-spacing="0.05em">SSH TUNNEL</text>
+
+      <!-- Label: localhost:9030 -->
+      <text x="148" y="200" fill="#8899AA" font-size="11" font-family="'JetBrains Mono', monospace">localhost:9030</text>
+
+      <!-- Node 1: Your Mac -->
+      <g class="node-box">
+        <rect x="30" y="50" width="188" height="100" rx="12" fill="#0D1525" stroke="#1E2E48" stroke-width="1.5"/>
+        <rect x="30" y="50" width="188" height="100" rx="12" fill="none" stroke="rgba(59,130,246,0.2)" stroke-width="1"/>
+        <text x="124" y="88" text-anchor="middle" fill="#F0E6D3" font-size="15" font-weight="700">Your Mac</text>
+        <text x="124" y="112" text-anchor="middle" fill="#8899AA" font-size="12" font-family="'JetBrains Mono', monospace">:9030</text>
+        <text x="124" y="134" text-anchor="middle" fill="#3B82F6" font-size="20">💻</text>
+      </g>
+
+      <!-- Node 2: Jump Server -->
+      <g class="node-box">
+        <rect x="340" y="50" width="190" height="100" rx="12" fill="#0D1525" stroke="#1E2E48" stroke-width="1.5"/>
+        <rect x="340" y="50" width="190" height="100" rx="12" fill="none" stroke="rgba(168,85,247,0.2)" stroke-width="1"/>
+        <text x="435" y="88" text-anchor="middle" fill="#F0E6D3" font-size="15" font-weight="700">Jump Server</text>
+        <text x="435" y="112" text-anchor="middle" fill="#8899AA" font-size="12" font-family="'JetBrains Mono', monospace">52.40.248.112</text>
+        <text x="435" y="134" text-anchor="middle" fill="#A855F7" font-size="20">🔐</text>
+      </g>
+
+      <!-- Node 3: StarRocks Cluster -->
+      <g class="node-box">
+        <rect x="652" y="50" width="220" height="100" rx="12" fill="#0D1525" stroke="#1E2E48" stroke-width="1.5"/>
+        <rect x="652" y="50" width="220" height="100" rx="12" fill="none" stroke="rgba(212,168,67,0.2)" stroke-width="1"/>
+        <text x="762" y="84" text-anchor="middle" fill="#D4A843" font-size="14" font-weight="700">private-metrics-pipeline</text>
+        <text x="762" y="108" text-anchor="middle" fill="#8899AA" font-size="12" font-family="'JetBrains Mono', monospace">StarRocks FE</text>
+        <text x="762" y="134" text-anchor="middle" fill="#D4A843" font-size="20">⚡</text>
+      </g>
+
+      <!-- Node 4: MCP Process -->
+      <g class="node-box">
+        <rect x="40" y="252" width="180" height="72" rx="12" fill="#0D1525" stroke="rgba(212,168,67,0.3)" stroke-width="1.5"/>
+        <text x="130" y="282" text-anchor="middle" fill="#D4A843" font-size="13" font-weight="700">starrocks-private</text>
+        <text x="130" y="304" text-anchor="middle" fill="#8899AA" font-size="11" font-family="'JetBrains Mono', monospace">MCP via uvx</text>
+      </g>
+
+      <!-- Arrow tip: VPN line -->
+      <line x1="330" y1="90" x2="340" y2="90" stroke="#3B82F6" stroke-width="2" marker-end="url(#arrow)"/>
+      <!-- Arrow tip: SSH line -->
+      <line x1="642" y1="90" x2="652" y2="90" stroke="#D4A843" stroke-width="2" marker-end="url(#arrow)"/>
+    </svg>
+  </div>
+
+  <!-- Prerequisites -->
+  <h3 class="reveal" style="font-size:18px;margin:32px 0 16px;">Prerequisites</h3>
+  <div class="reveal delay-1" style="display:flex;gap:16px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:200px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:20px;">
+      <div style="font-size:24px;margin-bottom:8px;">🔒</div>
+      <strong>Proton VPN</strong>
+      <p class="muted" style="font-size:13px;margin-top:4px;">Must be connected to reach the jump server</p>
+    </div>
+    <div style="flex:1;min-width:200px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:20px;">
+      <div style="font-size:24px;margin-bottom:8px;">🔑</div>
+      <strong>SSH Key</strong>
+      <p class="muted" style="font-size:13px;margin-top:4px;"><code style="color:var(--gold2);font-family:var(--mono);font-size:12px;">~/.ssh/byoc-user</code></p>
+    </div>
+    <div style="flex:1;min-width:200px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:20px;">
+      <div style="font-size:24px;margin-bottom:8px;">🐍</div>
+      <strong>Python uv/uvx</strong>
+      <p class="muted" style="font-size:13px;margin-top:4px;">Install: <code style="color:var(--gold2);font-family:var(--mono);font-size:12px;">brew install uv</code></p>
+    </div>
+  </div>
+
+  <!-- Setup Steps -->
+  <h3 class="reveal" style="font-size:18px;margin:40px 0 16px;">One-Time Setup</h3>
+  <div class="mcp-card reveal delay-1">
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h4>Install uv</h4>
+          <div class="code-block"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div>
+          <pre><span class="cmd">brew install</span> uv</pre></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h4>Place the SSH key</h4>
+          <div class="code-block"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div>
+          <pre><span class="cmd">cp</span> ~/Documents/development/celerdata/secrets/byoc-user ~/.ssh/byoc-user
+<span class="cmd">chmod</span> 600 ~/.ssh/byoc-user</pre></div>
+          <p class="muted" style="font-size:13px;margin-top:6px;">⚠️ Must be in ~/.ssh/ — macOS blocks LaunchAgents from reading ~/Documents/</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h4>Install the LaunchAgent</h4>
+          <div class="code-block"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div>
+          <pre><span class="cmd">cp</span> ~/Documents/development/celerdata/secrets/com.celerdata.sr-tunnel.plist ~/Library/LaunchAgents/
+<span class="cmd">launchctl load</span> ~/Library/LaunchAgents/com.celerdata.sr-tunnel.plist</pre></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h4>Add the shell alias</h4>
+          <div class="code-block"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div>
+          <pre><span class="cmd">echo</span> <span class="str">'alias sr-tunnel="~/Documents/development/celerdata/secrets/sr-tunnel.sh"'</span> >> ~/.zshrc
+<span class="cmd">source</span> ~/.zshrc</pre></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <h4>Add MCP config</h4>
+          <div class="code-block"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">claude_desktop_config.json</span></div>
+          <pre><span class="key">"starrocks-private"</span>: {
+  <span class="key">"command"</span>: <span class="str">"uvx"</span>,
+  <span class="key">"args"</span>: [<span class="str">"mcp-server-starrocks"</span>],
+  <span class="key">"env"</span>: {
+    <span class="key">"STARROCKS_HOST"</span>: <span class="str">"127.0.0.1"</span>,
+    <span class="key">"STARROCKS_PORT"</span>: <span class="str">"9030"</span>,
+    <span class="key">"STARROCKS_USER"</span>: <span class="str">"&lt;your-user&gt;"</span>,
+    <span class="key">"STARROCKS_PASSWORD"</span>: <span class="str">"&lt;your-password&gt;"</span>
+  }
+}</pre></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <div class="step-content">
+          <h4>Restart Claude Desktop</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Daily Usage -->
+  <h3 class="reveal" style="font-size:18px;margin:40px 0 16px;">Daily Usage</h3>
+  <div class="usage-box reveal delay-1">
+    <h4>Three commands. That's it.</h4>
+    <div class="code-block" style="margin-top:12px;">
+      <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">terminal</span></div>
+      <pre><span class="comment"># 1. Connect Proton VPN</span>
+
+<span class="comment"># 2. Start the tunnel</span>
+<span class="cmd">sr-tunnel</span>              <span class="ok"># ✅ Tunnel connected! (localhost:9030)</span>
+
+<span class="comment"># 3. Use Claude — it will query the cluster automatically</span>
+
+<span class="comment"># When done:</span>
+<span class="cmd">sr-tunnel stop</span>         <span class="comment"># 🔌 Tunnel stopped</span>
+
+<span class="comment"># Check status anytime:</span>
+<span class="cmd">sr-tunnel status</span>       <span class="ok"># ✅ Tunnel is running</span></pre>
+    </div>
+  </div>
+
+  <!-- Manual Alternative -->
+  <h3 class="reveal" style="font-size:18px;margin:40px 0 16px;">Manual SSH Tunnel (without sr-tunnel)</h3>
+  <div class="code-block reveal delay-1">
+    <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div>
+    <pre><span class="cmd">ssh</span> <span class="flag">-i</span> ~/.ssh/byoc-user \
+    <span class="flag">-L</span> 9030:1cogri9tn-internal.cloud-app.celerdata.com:9030 \
+    <span class="flag">-N</span> \
+    ec2-user@52.40.248.112</pre>
+  </div>
+
+  <!-- Cluster Info -->
+  <h3 class="reveal" style="font-size:18px;margin:40px 0 16px;">Cluster Info</h3>
+  <table class="overview-table reveal delay-1">
+    <tbody>
+      <tr><td style="color:var(--muted);font-weight:600;">Cluster name</td><td>private-metrics-pipeline</td></tr>
+      <tr><td style="color:var(--muted);font-weight:600;">Region</td><td>us-west-2</td></tr>
+      <tr><td style="color:var(--muted);font-weight:600;">Version</td><td>3.5.10-ee</td></tr>
+      <tr><td style="color:var(--muted);font-weight:600;">FE node</td><td>1× m6i.xlarge</td></tr>
+      <tr><td style="color:var(--muted);font-weight:600;">BE node</td><td>1× m6i.xlarge</td></tr>
+      <tr><td style="color:var(--muted);font-weight:600;">Databases</td><td>alerts, byoc, metrics, sys</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Troubleshooting -->
+  <h3 class="reveal" style="font-size:18px;margin:40px 0 16px;">Troubleshooting</h3>
+  <table class="trouble-table reveal delay-1">
+    <thead>
+      <tr><th>Problem</th><th>Solution</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>sr-tunnel fails</td>
+        <td>Check Proton VPN is connected</td>
+      </tr>
+      <tr>
+        <td>launchctl: "Operation not permitted"</td>
+        <td>SSH key must be in <code style="color:var(--gold2);font-family:var(--mono);font-size:12px;">~/.ssh/</code>, not <code style="color:var(--gold2);font-family:var(--mono);font-size:12px;">~/Documents/</code> (macOS privacy restriction)</td>
+      </tr>
+      <tr>
+        <td>"Can't connect to MySQL server"</td>
+        <td>Tunnel is not running — run <code style="color:var(--gold2);font-family:var(--mono);font-size:12px;">sr-tunnel</code> first</td>
+      </tr>
+      <tr>
+        <td>Works in Desktop, not in Cowork</td>
+        <td>Cowork sandbox can't access localhost tunnel; use Claude Desktop (non-Cowork)</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<div class="divider"></div>
+
+<!-- FILE STRUCTURE -->
+<section id="files">
+  <div class="section-label reveal">06 — File Structure</div>
+  <h2 class="reveal delay-1">Directory Layout</h2>
+
+  <div class="file-tree reveal delay-2">
+<span class="dir">celerdata/</span>
+├── <span class="file">README.md</span>                          <span class="note">← Markdown version of this guide</span>
+├── <span class="file">mcp-setup-guide.html</span>               <span class="note">← This HTML document</span>
+├── <span class="file">claude_desktop_config.json</span>         <span class="note">← MCP config (alias → Claude Desktop)</span>
+├── <span class="dir">byoc-admin-mcp/</span>                    <span class="note">← BYOC Admin MCP server source</span>
+│   ├── <span class="file">README.md</span>
+│   ├── <span class="file">dist/index.js</span>
+│   └── ...
+├── <span class="dir">feishu-mcp/</span>                        <span class="note">← Feishu MCP related files</span>
+├── <span class="dir">secrets/</span>
+│   ├── <span class="file">.env</span>                           <span class="note">← Database credentials</span>
+│   ├── <span class="file">byoc-user</span>                      <span class="note">← SSH key (copy to ~/.ssh/)</span>
+│   ├── <span class="file">sr-tunnel.sh</span>                   <span class="note">← Tunnel start/stop/status script</span>
+│   ├── <span class="file">com.celerdata.sr-tunnel.plist</span>  <span class="note">← macOS LaunchAgent</span>
+│   ├── <span class="file">credentials.json</span>               <span class="note">← Google OAuth credentials</span>
+│   └── <span class="file">google_token.pickle</span>            <span class="note">← Google OAuth token</span>
+└── <span class="dir">metrics_pipeline/</span>                  <span class="note">← Metrics pipeline related files</span>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p><span class="gold">CelerData</span> · Internal MCPs Setup Guide · Last updated Feb 2026</p>
+  <p style="margin-top:8px;color:#556677;font-size:12px;">This is a living document. As we connect more tools, this library grows — building toward a fully AI-driven engineering workflow.</p>
+</footer>
+
+<!-- REVEAL SCRIPT -->
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('active');
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
