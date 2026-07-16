@@ -9,7 +9,7 @@ This directory contains the configuration and tools for connecting Claude Deskto
 | `feishu-mcp` | Remote (Railway) | Feishu/Lark docs, wiki, chat, messaging | None |
 | `google-docs` | Remote (Railway) | Google Docs, Sheets, Drive | None |
 | `starrocks` | Remote (Railway) | StarRocks clusters (shared, managed by team) | Bearer token |
-| `byoc-admin` | Local (Node.js) | BYOC cluster management, diagnostics, metrics | BYOC session cookie |
+| `byoc-admin` | Local (Node.js) | BYOC cluster management, diagnostics, metrics | BYOC account (user/password) |
 | `starrocks-private` | Local (Python/uvx) | Private StarRocks cluster (private-metrics-pipeline) | Proton VPN + SSH tunnel |
 
 ## Configuration
@@ -103,30 +103,36 @@ Connects Claude to the CelerData BYOC Admin API for cluster management, diagnost
 
 **Type:** Local (Node.js)
 
-**Setup:**
+**Setup:** Runs locally via Claude Desktop; authenticates automatically with your
+BYOC credentials (`BYOC_USER` + `BYOC_PASSWORD`) — no cookie needed. See
+[byoc-admin-mcp-onboarding.md](./byoc-admin-mcp-onboarding.md) for the full walkthrough.
+
 1. Build the project:
    ```bash
-   cd ~/Documents/development/celerdata/byoc-admin-mcp
+   cd ~/Documents/development/celerdata/repos/byoc-admin-mcp
    npm install
    npm run build
    ```
-2. Get your BYOC session cookie from [byoc-admin.celerdata.com](https://byoc-admin.celerdata.com) (browser DevTools → Cookies → `SRSAASSESSION`).
-3. Update `BYOC_COOKIE` in the config.
+2. Add it under Settings → Developer → Local MCP servers (Edit Config), with your
+   own BYOC credentials in `env`.
 
 **Config:**
 ```json
 "byoc-admin": {
   "command": "node",
   "args": [
-    "/Users/<you>/Documents/development/celerdata/byoc-admin-mcp/dist/index.js"
+    "/Users/<you>/Documents/development/celerdata/repos/byoc-admin-mcp/dist/index.js"
   ],
   "env": {
-    "BYOC_COOKIE": "<your-SRSAASSESSION-cookie>"
+    "BYOC_USER": "<your-byoc-admin-username>",
+    "BYOC_PASSWORD": "<your-byoc-admin-password>"
   }
 }
 ```
 
-**Note:** The session cookie expires periodically. If tools start failing with auth errors, grab a fresh cookie from the browser.
+**Note:** Auth is automatic and self-refreshing via `BYOC_USER`/`BYOC_PASSWORD`.
+(Legacy `BYOC_COOKIE` / `set_credentials` still work as fallbacks.) A hosted Railway
+deployment also exists (Moreno's) but the local setup above is the standard one.
 
 **Available tools:** See [byoc-admin-mcp/README.md](./byoc-admin-mcp/README.md) for the full tool list.
 
